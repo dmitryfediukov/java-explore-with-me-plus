@@ -260,6 +260,10 @@ public class MainService {
         List<RequestDto> confirmed = new ArrayList<>();
         List<RequestDto> rejected = new ArrayList<>();
         long alreadyConfirmed = requests.countByEvent_IdAndStatus(eventId, RequestStatus.CONFIRMED);
+        if ("CONFIRMED".equals(update.status()) && event.getParticipantLimit() > 0
+                && alreadyConfirmed >= event.getParticipantLimit()) {
+            throw ApiException.conflict("Participant limit is reached");
+        }
         for (Long id : update.requestIds()) {
             ParticipationRequestEntity request = request(id);
             if (!request.getEvent().getId().equals(eventId) || request.getStatus() != RequestStatus.PENDING)

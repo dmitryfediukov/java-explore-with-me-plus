@@ -14,7 +14,8 @@ public final class Dtos {
     private Dtos() {
     }
 
-    public record UserRequest(@NotBlank String name, @NotBlank @Email String email) {
+    public record UserRequest(@NotBlank @Size(min = 2, max = 250) String name,
+            @NotBlank @Email @Size(min = 6, max = 254) String email) {
     }
 
     public record UserDto(Long id, String name, String email) {
