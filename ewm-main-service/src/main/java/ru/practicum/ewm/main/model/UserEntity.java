@@ -1,7 +1,10 @@
 package ru.practicum.ewm.main.model;
 
 import jakarta.persistence.*;
+import lombok.NoArgsConstructor;
+import lombok.AccessLevel;
 
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "users")
 public class UserEntity {
@@ -12,9 +15,6 @@ public class UserEntity {
     private String name;
     @Column(nullable = false, unique = true, length = 254)
     private String email;
-
-    protected UserEntity() {
-    }
 
     public UserEntity(String name, String email) {
         this.name = name;
@@ -45,3 +45,4 @@ public class UserEntity {
         this.email = email;
     }
 }
+

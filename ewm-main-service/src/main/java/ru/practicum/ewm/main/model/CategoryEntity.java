@@ -1,7 +1,10 @@
 package ru.practicum.ewm.main.model;
 
 import jakarta.persistence.*;
+import lombok.NoArgsConstructor;
+import lombok.AccessLevel;
 
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
 @Table(name = "categories")
 public class CategoryEntity {
@@ -10,9 +13,6 @@ public class CategoryEntity {
     private Long id;
     @Column(nullable = false, unique = true, length = 50)
     private String name;
-
-    protected CategoryEntity() {
-    }
 
     public CategoryEntity(String name) {
         this.name = name;
@@ -34,3 +34,4 @@ public class CategoryEntity {
         this.name = name;
     }
 }
+

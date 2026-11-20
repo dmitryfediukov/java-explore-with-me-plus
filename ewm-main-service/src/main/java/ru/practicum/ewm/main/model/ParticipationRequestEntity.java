@@ -1,8 +1,10 @@
 package ru.practicum.ewm.main.model;
 
 import jakarta.persistence.*;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
+@NoArgsConstructor
 @Entity
 @Table(name = "participation_requests", uniqueConstraints = @UniqueConstraint(columnNames = { "event_id",
         "requester_id" }))
@@ -21,9 +23,6 @@ public class ParticipationRequestEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 16)
     private RequestStatus status;
-
-    public ParticipationRequestEntity() {
-    }
 
     public Long getId() {
         return id;
@@ -65,3 +64,4 @@ public class ParticipationRequestEntity {
         this.status = status;
     }
 }
+

@@ -1,9 +1,11 @@
 package ru.practicum.ewm.main.model;
 
 import jakarta.persistence.*;
+import lombok.NoArgsConstructor;
 import java.util.ArrayList;
 import java.util.List;
 
+@NoArgsConstructor
 @Entity
 @Table(name = "compilations")
 public class CompilationEntity {
@@ -17,9 +19,6 @@ public class CompilationEntity {
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "compilation_events", joinColumns = @JoinColumn(name = "compilation_id"), inverseJoinColumns = @JoinColumn(name = "event_id"))
     private List<EventEntity> events = new ArrayList<>();
-
-    public CompilationEntity() {
-    }
 
     public Long getId() {
         return id;
@@ -53,3 +52,4 @@ public class CompilationEntity {
         this.events = events;
     }
 }
+

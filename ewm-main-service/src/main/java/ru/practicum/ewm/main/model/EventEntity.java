@@ -1,8 +1,10 @@
 package ru.practicum.ewm.main.model;
 
 import jakarta.persistence.*;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
+@NoArgsConstructor
 @Entity
 @Table(name = "events")
 public class EventEntity {
@@ -40,9 +42,6 @@ public class EventEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
     private CategoryEntity category;
-
-    public EventEntity() {
-    }
 
     public Long getId() {
         return id;
@@ -164,3 +163,4 @@ public class EventEntity {
         this.category = category;
     }
 }
+
