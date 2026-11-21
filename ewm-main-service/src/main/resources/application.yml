@@ -1,0 +1,21 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: ewm-main-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/ewm}
+    username: ${SPRING_DATASOURCE_USERNAME:ewm}
+    password: ${SPRING_DATASOURCE_PASSWORD:ewm}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+ewm:
+  stats-server:
+    url: ${STATS_SERVER_URL:http://localhost:9090}
