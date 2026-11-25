@@ -1,6 +1,7 @@
 package ru.practicum.ewm.main.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -32,6 +33,7 @@ import org.springframework.test.context.support.DependencyInjectionTestExecution
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import ru.practicum.ewm.main.repository.CategoryRepository;
+import ru.practicum.ewm.main.repository.CommentRepository;
 import ru.practicum.ewm.main.repository.CompilationRepository;
 import ru.practicum.ewm.main.repository.EventRepository;
 import ru.practicum.ewm.main.repository.ParticipationRequestRepository;
@@ -68,10 +70,14 @@ class MainServiceApiTest {
     private UserRepository users;
 
     @Autowired
+    private CommentRepository comments;
+
+    @Autowired
     private TestStatsClient stats;
 
     @BeforeEach
     void clearData() {
+        comments.deleteAll();
         compilations.deleteAll();
         requests.deleteAll();
         events.deleteAll();
@@ -99,8 +105,8 @@ class MainServiceApiTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "/admin/users", "/admin/events", "/categories", "/compilations", "/events",
-            "/users/999/events" })
+    @ValueSource(strings = { "/admin/users", "/admin/events", "/admin/comments", "/categories", "/compilations",
+            "/events", "/events/1/comments", "/users/999/events", "/users/999/comments" })
     void shouldRejectInvalidPaginationAtController(String path) throws Exception {
         mockMvc.perform(get(path).param("from", "-1").param("size", "10"))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.status").value("BAD_REQUEST"));
@@ -175,6 +181,55 @@ class MainServiceApiTest {
                         .content(mapper.writeValueAsString(Map.of("title", "Invalid change", "stateAction", "REJECT_EVENT"))))
                 .andExpect(status().isConflict());
         assertThat(read("/events/" + event).path("title").asText()).isEqualTo("Original title");
+    }
+
+    @Test
+    void shouldPublishRejectAndHideEventComments() throws Exception {
+        long owner = createUser("owner");
+        long author = createUser("author");
+        long stranger = createUser("stranger");
+        long category = create("/admin/categories", Map.of("name", "Talks")).path("id").asLong();
+        long event = createEvent(owner, category);
+
+        mockMvc.perform(post("/users/" + author + "/comments").contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(Map.of("text", "Too early", "eventId", event))))
+                .andExpect(status().isConflict());
+        change("/admin/events/" + event, Map.of("stateAction", "PUBLISH_EVENT"));
+        mockMvc.perform(post("/users/" + author + "/comments").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"text\":\" \",\"eventId\":" + event + "}"))
+                .andExpect(status().isBadRequest());
+
+        long comment = create("/users/" + author + "/comments",
+                Map.of("text", "Great event, looking forward to it", "eventId", event)).path("id").asLong();
+        assertThat(read("/users/" + author + "/comments").get(0).path("status").asText()).isEqualTo("PENDING");
+        mockMvc.perform(get("/comments/" + comment)).andExpect(status().isNotFound());
+        assertThat(read("/events/" + event + "/comments").size()).isZero();
+
+        JsonNode published = change("/admin/comments/" + comment, Map.of("status", "PUBLISHED"));
+        assertThat(published.path("status").asText()).isEqualTo("PUBLISHED");
+        assertThat(published.path("publishedOn").isNull()).isFalse();
+        assertThat(read("/comments/" + comment).path("author").path("id").asLong()).isEqualTo(author);
+        assertThat(read("/events/" + event + "/comments").get(0).path("text").asText())
+                .isEqualTo("Great event, looking forward to it");
+
+        change("/users/" + author + "/comments/" + comment,
+                Map.of("text", "Updated comment after publication for review"));
+        mockMvc.perform(get("/comments/" + comment)).andExpect(status().isNotFound());
+        change("/admin/comments/" + comment, Map.of("status", "REJECTED"));
+        assertThat(read("/events/" + event + "/comments").size()).isZero();
+        mockMvc.perform(patch("/users/" + stranger + "/comments/" + comment).contentType(MediaType.APPLICATION_JSON)
+                        .content(mapper.writeValueAsString(Map.of("text", "I should not edit this comment at all"))))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(patch("/admin/comments/" + comment).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"UNKNOWN\"}")).andExpect(status().isBadRequest());
+
+        mockMvc.perform(delete("/users/" + author + "/comments/" + comment)).andExpect(status().isNoContent());
+        long removedByAdmin = create("/users/" + author + "/comments",
+                Map.of("text", "Another comment that admin will remove", "eventId", event)).path("id").asLong();
+        mockMvc.perform(delete("/admin/comments/" + removedByAdmin)).andExpect(status().isNoContent());
+        mockMvc.perform(get("/admin/comments").param("events", String.valueOf(event)).param("states", "PENDING"))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.length()").value(0));
+        mockMvc.perform(delete("/admin/comments/" + removedByAdmin)).andExpect(status().isNotFound());
     }
 
     @Test

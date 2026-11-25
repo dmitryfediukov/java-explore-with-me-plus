@@ -8,6 +8,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.main.dto.Dtos.*;
+import ru.practicum.ewm.main.service.CommentService;
 import ru.practicum.ewm.main.service.EventService;
 import ru.practicum.ewm.main.service.RequestService;
 
@@ -17,10 +18,12 @@ import ru.practicum.ewm.main.service.RequestService;
 public class PrivateController {
     private final EventService eventService;
     private final RequestService requestService;
+    private final CommentService commentService;
 
-    public PrivateController(EventService eventService, RequestService requestService) {
+    public PrivateController(EventService eventService, RequestService requestService, CommentService commentService) {
         this.eventService = eventService;
         this.requestService = requestService;
+        this.commentService = commentService;
     }
 
     @GetMapping("/events")
@@ -71,6 +74,31 @@ public class PrivateController {
     @PatchMapping("/requests/{requestId}/cancel")
     public RequestDto cancelRequest(@PathVariable long userId, @PathVariable long requestId) {
         return requestService.cancelRequest(userId, requestId);
+    }
+
+    @GetMapping("/comments")
+    public List<CommentDto> comments(@PathVariable long userId,
+            @RequestParam(defaultValue = "0") @PositiveOrZero int from,
+            @RequestParam(defaultValue = "10") @Positive int size) {
+        return commentService.getUserComments(userId, from, size);
+    }
+
+    @PostMapping("/comments")
+    @ResponseStatus(HttpStatus.CREATED)
+    public CommentDto createComment(@PathVariable long userId, @Valid @RequestBody CommentRequest request) {
+        return commentService.createComment(userId, request);
+    }
+
+    @PatchMapping("/comments/{commentId}")
+    public CommentDto updateComment(@PathVariable long userId, @PathVariable long commentId,
+            @Valid @RequestBody CommentUpdate update) {
+        return commentService.updateComment(userId, commentId, update);
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteComment(@PathVariable long userId, @PathVariable long commentId) {
+        commentService.deleteComment(userId, commentId);
     }
 }
 
