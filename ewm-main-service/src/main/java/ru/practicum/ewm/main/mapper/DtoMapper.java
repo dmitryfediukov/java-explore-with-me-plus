@@ -54,6 +54,11 @@ public class DtoMapper {
         return new CompilationDto(shortDtos(e.getEvents()), e.getId(), e.isPinned(), e.getTitle());
     }
 
+    public CommentDto commentDto(CommentEntity e) {
+        return new CommentDto(e.getId(), e.getText(), e.getEvent().getId(), shortUser(e.getAuthor()),
+                e.getStatus().name(), e.getCreated(), e.getPublishedOn());
+    }
+
     public List<EventShortDto> shortDtos(List<EventEntity> list) {
         Map<Long, Long> viewCounts = statistics.views(list);
         return list.stream().map(e -> shortDto(e, viewCounts.getOrDefault(e.getId(), 0L))).toList();

@@ -77,4 +77,18 @@ public final class Dtos {
 
     public record RequestStatusResult(List<RequestDto> confirmedRequests, List<RequestDto> rejectedRequests) {
     }
+
+    public record CommentRequest(@NotBlank @Size(min = 1, max = 2000) String text, @NotNull Long eventId) {
+    }
+
+    public record CommentUpdate(@NotBlank @Size(min = 1, max = 2000) String text) {
+    }
+
+    public record CommentModeration(@NotBlank String status) {
+    }
+
+    public record CommentDto(Long id, String text, Long event, UserShortDto author, String status,
+            @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime created,
+            @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") LocalDateTime publishedOn) {
+    }
 }

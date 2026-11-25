@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.main.dto.Dtos.*;
 import ru.practicum.ewm.main.service.CategoryService;
+import ru.practicum.ewm.main.service.CommentService;
 import ru.practicum.ewm.main.service.CompilationService;
 import ru.practicum.ewm.main.service.EventService;
 import ru.practicum.ewm.main.service.UserService;
@@ -24,12 +25,14 @@ public class AdminController {
     private final CompilationService compilationService;
     private final EventService eventService;
     private final UserService userService;
+    private final CommentService commentService;
 
-    public AdminController(CategoryService categoryService, CompilationService compilationService, EventService eventService, UserService userService) {
+    public AdminController(CategoryService categoryService, CompilationService compilationService, EventService eventService, UserService userService, CommentService commentService) {
         this.categoryService = categoryService;
         this.compilationService = compilationService;
         this.eventService = eventService;
         this.userService = userService;
+        this.commentService = commentService;
     }
 
     @GetMapping("/users")
@@ -96,6 +99,27 @@ public class AdminController {
     @PatchMapping("/events/{eventId}")
     public EventFullDto updateEvent(@PathVariable long eventId, @Valid @RequestBody EventUpdate update) {
         return eventService.updateAdminEvent(eventId, update);
+    }
+
+    @GetMapping("/comments")
+    public List<CommentDto> comments(@RequestParam(required = false) List<Long> users,
+            @RequestParam(required = false) List<Long> events, @RequestParam(required = false) List<String> states,
+            @RequestParam(required = false) @DateTimeFormat(pattern = DATE_PATTERN) LocalDateTime rangeStart,
+            @RequestParam(required = false) @DateTimeFormat(pattern = DATE_PATTERN) LocalDateTime rangeEnd,
+            @RequestParam(defaultValue = "0") @PositiveOrZero int from,
+            @RequestParam(defaultValue = "10") @Positive int size) {
+        return commentService.searchComments(users, events, states, rangeStart, rangeEnd, from, size);
+    }
+
+    @PatchMapping("/comments/{commentId}")
+    public CommentDto moderateComment(@PathVariable long commentId, @Valid @RequestBody CommentModeration moderation) {
+        return commentService.moderateComment(commentId, moderation);
+    }
+
+    @DeleteMapping("/comments/{commentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteComment(@PathVariable long commentId) {
+        commentService.deleteCommentByAdmin(commentId);
     }
 }
 

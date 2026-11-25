@@ -17,13 +17,15 @@ public class EntityResolver {
     private final EventRepository events;
     private final ParticipationRequestRepository requests;
     private final CompilationRepository compilations;
+    private final CommentRepository comments;
 
-    public EntityResolver(UserRepository users, CategoryRepository categories, EventRepository events, ParticipationRequestRepository requests, CompilationRepository compilations) {
+    public EntityResolver(UserRepository users, CategoryRepository categories, EventRepository events, ParticipationRequestRepository requests, CompilationRepository compilations, CommentRepository comments) {
         this.users = users;
         this.categories = categories;
         this.events = events;
         this.requests = requests;
         this.compilations = compilations;
+        this.comments = comments;
     }
 
     public EventEntity getOwnedEvent(long userId, long eventId) {
@@ -54,6 +56,11 @@ public class EntityResolver {
     public CompilationEntity compilation(long id) {
         return compilations.findById(id)
                 .orElseThrow(() -> ApiException.notFound("Compilation with id=" + id + " was not found"));
+    }
+
+    public CommentEntity comment(long id) {
+        return comments.findById(id)
+                .orElseThrow(() -> ApiException.notFound("Comment with id=" + id + " was not found"));
     }
 
     public List<EventEntity> resolveEvents(List<Long> ids) {

@@ -10,6 +10,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.ewm.main.dto.Dtos.*;
 import ru.practicum.ewm.main.service.CategoryService;
+import ru.practicum.ewm.main.service.CommentService;
 import ru.practicum.ewm.main.service.CompilationService;
 import ru.practicum.ewm.main.service.EventService;
 
@@ -20,11 +21,13 @@ public class PublicController {
     private final CategoryService categoryService;
     private final CompilationService compilationService;
     private final EventService eventService;
+    private final CommentService commentService;
 
-    public PublicController(CategoryService categoryService, CompilationService compilationService, EventService eventService) {
+    public PublicController(CategoryService categoryService, CompilationService compilationService, EventService eventService, CommentService commentService) {
         this.categoryService = categoryService;
         this.compilationService = compilationService;
         this.eventService = eventService;
+        this.commentService = commentService;
     }
 
     @GetMapping("/categories")
@@ -64,6 +67,18 @@ public class PublicController {
     @GetMapping("/events/{id}")
     public EventFullDto event(@PathVariable long id, HttpServletRequest request) {
         return eventService.getPublicEvent(id, request.getRemoteAddr(), "ewm-main-service");
+    }
+
+    @GetMapping("/events/{eventId}/comments")
+    public List<CommentDto> eventComments(@PathVariable long eventId,
+            @RequestParam(defaultValue = "0") @PositiveOrZero int from,
+            @RequestParam(defaultValue = "10") @Positive int size) {
+        return commentService.getPublishedComments(eventId, from, size);
+    }
+
+    @GetMapping("/comments/{commentId}")
+    public CommentDto comment(@PathVariable long commentId) {
+        return commentService.getPublishedComment(commentId);
     }
 }
 
